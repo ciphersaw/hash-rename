@@ -10,12 +10,13 @@ import (
 
 // usageMap records the usage of each argument.
 var usageMap = map[string]string{
-	"help":    "Print the usage of hash-rename.",
-	"version": "Print the version of hash-rename.",
-	"file":    "Set the file path to be renamed.",
-	"dir":     "Set the directory path including files to be renamed.",
-	"suffix":  "Set the suffixes of files.",
-	"hash":    "Set the hash function for renaming.\nCurrently available for md5, sha1, sha256.",
+	"help":        "Print the usage of hash-rename.",
+	"version":     "Print the version of hash-rename.",
+	"file":        "Set the file path to be renamed.",
+	"dir":         "Set the directory path including files to be renamed.",
+	"suffix":      "Set the suffixes of files.",
+	"hash":        "Set the hash function for renaming.\nCurrently available for md5, sha1, sha256.",
+	"concurrency": "Set the goroutine concurrency for renaming files",
 }
 
 // usage customizes the usage information for hash-rename.

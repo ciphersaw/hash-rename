@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash-rename/common"
 	"os"
+	"strconv"
 	"strings"
 
 	flag "github.com/spf13/pflag"
@@ -13,12 +14,13 @@ import (
 const VERSION = "v1.0.0"
 
 var (
-	argHelp    bool
-	argVersion bool
-	argFile    string
-	argDir     string
-	argSuffix  string
-	argHash    string
+	argHelp        bool
+	argVersion     bool
+	argFile        string
+	argDir         string
+	argSuffix      string
+	argHash        string
+	argConcurrency uint8
 
 	err          error
 	suffixConfig SuffixConfig
@@ -42,6 +44,7 @@ func InitArgs() {
 	flag.StringVarP(&argDir, "dir", "d", "", usageMap["dir"])
 	flag.StringVarP(&argSuffix, "suffix", "s", "", usageMap["suffix"])
 	flag.StringVarP(&argHash, "hash", "h", "md5", usageMap["hash"])
+	flag.Uint8VarP(&argConcurrency, "concurrency", "c", 4, usageMap["concurrency"])
 	flag.Usage = usage
 	flag.Parse()
 
@@ -62,6 +65,11 @@ func InitArgs() {
 		}
 
 		suffixConfig, err = setSuffixConfig(argSuffix)
+		if err != nil {
+			os.Exit(1)
+		}
+
+		err = checkConcurrency(argConcurrency)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -106,6 +114,16 @@ func setSuffixConfig(s string) (sc SuffixConfig, err error) {
 	}
 
 	return sc, nil
+}
+
+// checkConcurrency checks if the goroutine concurrency is valid.
+func checkConcurrency(u uint8) (err error) {
+	if u >= 1 && u <= 64 {
+		return nil
+	} else {
+		fmt.Printf("checkConcurrency checks %d concurrency is invalid.\n", u)
+		return errors.New(strconv.Itoa(int(u)) + "concurrency is invalid")
+	}
 }
 
 // checkHashFunc checks if the hash function is available.

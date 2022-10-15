@@ -5,6 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+)
+
+var (
+	fileNameChan     = make(chan string, 64)
+	renameResultChan = make(chan []string, 64)
+	renameWG         = new(sync.WaitGroup)
 )
 
 // StartRenameTask starts the rename task according to initialization arguments.
@@ -45,71 +52,64 @@ func renameBulkFiles() {
 		return
 	}
 
-	if suffixConfig.isSetAll {
+	// Deal with results
+	go func() {
 		count := 0
-		for _, file := range files {
-			fileName := file.Name()
-			oldFile := filepath.Join(argDir, fileName)
-			fileHash, err := GetFileHash(oldFile, argHash)
-			if err != nil {
-				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
-				continue
-			}
-			fileSuffix := filepath.Ext(fileName)
-			newFile := filepath.Join(argDir, fileHash+fileSuffix)
-			err = os.Rename(oldFile, newFile)
-			if err != nil {
-				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
-				continue
-			}
+
+		for {
+			result := <-renameResultChan
 			count += 1
-			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(oldFile), filepath.Base(newFile))
+			fmt.Printf("[%d] %s --> %s\n", count, result[0], result[1])
+			renameWG.Done()
 		}
-	} else if suffixConfig.isSetNull {
-		count := 0
-		for _, file := range files {
-			fileName := file.Name()
-			fileSuffix := filepath.Ext(fileName)
-			if fileSuffix != "" {
-				continue
+	}()
+
+	// Generate goroutines for renaming files
+	for c := uint8(0); c < argConcurrency; c++ {
+		go func() {
+			for {
+				fileName := <-fileNameChan
+				// Check suffix
+				fileSuffix := filepath.Ext(fileName)
+				if suffixConfig.isSetAll {
+					// Do nothing
+				} else if suffixConfig.isSetNull {
+					if fileSuffix != "" {
+						renameWG.Done()
+						continue
+					}
+				} else {
+					if _, ok := suffixConfig.suffixMap[strings.TrimLeft(fileSuffix, `.`)]; !ok {
+						renameWG.Done()
+						continue
+					}
+				}
+				// Get file hash
+				oldFile := filepath.Join(argDir, fileName)
+				fileHash, err := GetFileHash(oldFile, argHash)
+				if err != nil {
+					fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
+					renameWG.Done()
+					continue
+				}
+				// Rename file with its hash value
+				newFile := filepath.Join(argDir, fileHash+fileSuffix)
+				err = os.Rename(oldFile, newFile)
+				if err != nil {
+					fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
+					renameWG.Done()
+					continue
+				}
+				// Output result
+				renameResultChan <- []string{filepath.Base(oldFile), filepath.Base(newFile)}
 			}
-			oldFile := filepath.Join(argDir, fileName)
-			fileHash, err := GetFileHash(oldFile, argHash)
-			if err != nil {
-				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
-				continue
-			}
-			newFile := filepath.Join(argDir, fileHash)
-			err = os.Rename(oldFile, newFile)
-			if err != nil {
-				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
-				continue
-			}
-			count += 1
-			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(oldFile), filepath.Base(newFile))
-		}
-	} else {
-		count := 0
-		for _, file := range files {
-			fileName := file.Name()
-			fileSuffix := filepath.Ext(fileName)
-			if _, ok := suffixConfig.suffixMap[strings.TrimLeft(fileSuffix, `.`)]; !ok {
-				continue
-			}
-			oldFile := filepath.Join(argDir, fileName)
-			fileHash, err := GetFileHash(oldFile, argHash)
-			if err != nil {
-				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
-				continue
-			}
-			newFile := filepath.Join(argDir, fileHash+fileSuffix)
-			err = os.Rename(oldFile, newFile)
-			if err != nil {
-				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
-				continue
-			}
-			count += 1
-			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(oldFile), filepath.Base(newFile))
-		}
+		}()
 	}
+
+	// Collect file names for renaming
+	renameWG.Add(len(files))
+	for _, file := range files {
+		fileNameChan <- file.Name()
+	}
+	renameWG.Wait()
 }
