@@ -49,20 +49,21 @@ func renameBulkFiles() {
 		count := 0
 		for _, file := range files {
 			fileName := file.Name()
-			fileHash, err := GetFileHash(fileName, argHash)
+			oldFile := filepath.Join(argDir, fileName)
+			fileHash, err := GetFileHash(oldFile, argHash)
 			if err != nil {
-				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, fileName, err.Error())
+				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
 				continue
 			}
 			fileSuffix := filepath.Ext(fileName)
 			newFile := filepath.Join(argDir, fileHash+fileSuffix)
-			err = os.Rename(fileName, newFile)
+			err = os.Rename(oldFile, newFile)
 			if err != nil {
-				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", fileName, newFile, err.Error())
+				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
 				continue
 			}
 			count += 1
-			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(fileName), filepath.Base(newFile))
+			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(oldFile), filepath.Base(newFile))
 		}
 	} else if suffixConfig.isSetNull {
 		count := 0
@@ -72,19 +73,20 @@ func renameBulkFiles() {
 			if fileSuffix != "" {
 				continue
 			}
-			fileHash, err := GetFileHash(fileName, argHash)
+			oldFile := filepath.Join(argDir, fileName)
+			fileHash, err := GetFileHash(oldFile, argHash)
 			if err != nil {
-				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, fileName, err.Error())
+				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
 				continue
 			}
 			newFile := filepath.Join(argDir, fileHash)
-			err = os.Rename(fileName, newFile)
+			err = os.Rename(oldFile, newFile)
 			if err != nil {
-				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", fileName, newFile, err.Error())
+				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
 				continue
 			}
 			count += 1
-			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(fileName), filepath.Base(newFile))
+			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(oldFile), filepath.Base(newFile))
 		}
 	} else {
 		count := 0
@@ -94,19 +96,20 @@ func renameBulkFiles() {
 			if _, ok := suffixConfig.suffixMap[strings.TrimLeft(fileSuffix, `.`)]; !ok {
 				continue
 			}
-			fileHash, err := GetFileHash(fileName, argHash)
+			oldFile := filepath.Join(argDir, fileName)
+			fileHash, err := GetFileHash(oldFile, argHash)
 			if err != nil {
-				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, fileName, err.Error())
+				fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
 				continue
 			}
 			newFile := filepath.Join(argDir, fileHash+fileSuffix)
-			err = os.Rename(fileName, newFile)
+			err = os.Rename(oldFile, newFile)
 			if err != nil {
-				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", fileName, newFile, err.Error())
+				fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
 				continue
 			}
 			count += 1
-			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(fileName), filepath.Base(newFile))
+			fmt.Printf("[%d] %s --> %s\n", count, filepath.Base(oldFile), filepath.Base(newFile))
 		}
 	}
 }
