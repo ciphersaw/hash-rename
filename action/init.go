@@ -16,6 +16,7 @@ const VERSION = "v1.0.0"
 var (
 	argHelp        bool
 	argVersion     bool
+	argUppercase   bool
 	argFile        string
 	argDir         string
 	argSuffix      string
@@ -40,6 +41,7 @@ type SuffixConfig struct {
 func InitArgs() {
 	flag.BoolVarP(&argHelp, "help", "", false, usageMap["help"])
 	flag.BoolVarP(&argVersion, "version", "v", false, usageMap["version"])
+	flag.BoolVarP(&argUppercase, "uppercase", "u", false, usageMap["uppercase"])
 	flag.StringVarP(&argFile, "file", "f", "", usageMap["file"])
 	flag.StringVarP(&argDir, "dir", "d", "", usageMap["dir"])
 	flag.StringVarP(&argSuffix, "suffix", "s", "", usageMap["suffix"])

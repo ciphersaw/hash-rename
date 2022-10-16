@@ -32,6 +32,9 @@ func renameOneFile() error {
 		fmt.Printf("renameOneFile gets the %s of %s error: %s\n", argHash, argFile, err.Error())
 		return err
 	}
+	if argUppercase {
+		fileHash = strings.ToUpper(fileHash)
+	}
 	fileSuffix := filepath.Ext(argFile)
 	fileDir := filepath.Dir(argFile)
 	newFile := filepath.Join(fileDir, fileHash+fileSuffix)
@@ -92,6 +95,9 @@ func renameBulkFiles() error {
 					fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
 					renameWG.Done()
 					continue
+				}
+				if argUppercase {
+					fileHash = strings.ToUpper(fileHash)
 				}
 				// Rename file with its hash value
 				newFile := filepath.Join(argDir, fileHash+fileSuffix)

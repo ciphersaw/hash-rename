@@ -16,7 +16,8 @@ var usageMap = map[string]string{
 	"dir":         "Set the directory path including files to be renamed.",
 	"suffix":      "Set the suffixes of files.",
 	"hash":        "Set the hash function for renaming.\nCurrently available for md5, sha1, sha256.",
-	"concurrency": "Set the goroutine concurrency for renaming files",
+	"concurrency": "Set the goroutine concurrency for renaming files.",
+	"uppercase":   "Set the uppercase of hash value for renaming.",
 }
 
 // usage customizes the usage information for hash-rename.
