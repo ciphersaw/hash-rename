@@ -25,12 +25,12 @@ func StartRenameTask() {
 }
 
 // renameOneFile renames a specific file.
-func renameOneFile() {
+func renameOneFile() error {
 	fmt.Printf("Result of renameOneFile:\n")
 	fileHash, err := GetFileHash(argFile, argHash)
 	if err != nil {
 		fmt.Printf("renameOneFile gets the %s of %s error: %s\n", argHash, argFile, err.Error())
-		return
+		return err
 	}
 	fileSuffix := filepath.Ext(argFile)
 	fileDir := filepath.Dir(argFile)
@@ -38,18 +38,19 @@ func renameOneFile() {
 	err = os.Rename(argFile, newFile)
 	if err != nil {
 		fmt.Printf("renameOneFile renames %s to %s error: %s\n", argFile, newFile, err.Error())
-		return
+		return err
 	}
 	fmt.Printf("[*] %s --> %s\n", filepath.Base(argFile), filepath.Base(newFile))
+	return nil
 }
 
 // renameBulkFiles renames the files with specific suffixes in directory.
-func renameBulkFiles() {
+func renameBulkFiles() error {
 	fmt.Printf("Result of renameBulkFiles:\n")
 	files, err := os.ReadDir(argDir)
 	if err != nil {
 		fmt.Printf("renameBulkFiles gets the files in %s error: %s\n", argDir, err.Error())
-		return
+		return err
 	}
 
 	// Deal with results
@@ -112,4 +113,5 @@ func renameBulkFiles() {
 		fileNameChan <- file.Name()
 	}
 	renameWG.Wait()
+	return nil
 }

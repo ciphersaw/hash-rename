@@ -122,7 +122,7 @@ func checkConcurrency(u uint8) (err error) {
 		return nil
 	} else {
 		fmt.Printf("checkConcurrency checks %d concurrency is invalid.\n", u)
-		return errors.New(strconv.Itoa(int(u)) + "concurrency is invalid")
+		return errors.New(strconv.Itoa(int(u)) + " concurrency is invalid")
 	}
 }
 
