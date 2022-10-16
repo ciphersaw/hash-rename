@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	fileNameChan     = make(chan string, 64)
-	renameResultChan = make(chan []string, 64)
-	renameWG         = new(sync.WaitGroup)
+	fileNameChan     chan string
+	renameResultChan chan []string
+	renameWG         *sync.WaitGroup
 )
 
 // StartRenameTask starts the rename task according to initialization arguments.
@@ -52,13 +52,14 @@ func renameBulkFiles() error {
 		fmt.Printf("renameBulkFiles gets the files in %s error: %s\n", argDir, err.Error())
 		return err
 	}
+	fileNameChan = make(chan string, 64)
+	renameResultChan = make(chan []string, 64)
+	renameWG = new(sync.WaitGroup)
 
 	// Deal with results
 	go func() {
 		count := 0
-
-		for {
-			result := <-renameResultChan
+		for result := range renameResultChan {
 			count += 1
 			fmt.Printf("[%d] %s --> %s\n", count, result[0], result[1])
 			renameWG.Done()
@@ -68,8 +69,7 @@ func renameBulkFiles() error {
 	// Generate goroutines for renaming files
 	for c := uint8(0); c < argConcurrency; c++ {
 		go func() {
-			for {
-				fileName := <-fileNameChan
+			for fileName := range fileNameChan {
 				// Check suffix
 				fileSuffix := filepath.Ext(fileName)
 				if suffixConfig.isSetAll {
@@ -113,5 +113,8 @@ func renameBulkFiles() error {
 		fileNameChan <- file.Name()
 	}
 	renameWG.Wait()
+
+	close(fileNameChan)
+	close(renameResultChan)
 	return nil
 }
