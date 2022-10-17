@@ -24,7 +24,8 @@ var (
 	argConcurrency uint8
 
 	err          error
-	suffixConfig SuffixConfig
+	suffixConfig *SuffixConfig
+	hashFunc     *HashFunc
 )
 
 // SuffixConfig records the suffix config.
@@ -82,19 +83,20 @@ func InitArgs() {
 		os.Exit(1)
 	}
 
-	if argHash, err = checkHashFunc(argHash); err != nil {
+	if argHash, hashFunc, err = setHashFunc(argHash); err != nil {
 		os.Exit(1)
 	}
 }
 
 // setSuffixConfig sets the suffix config.
-func setSuffixConfig(s string) (sc SuffixConfig, err error) {
+func setSuffixConfig(s string) (sc *SuffixConfig, err error) {
 	s = strings.TrimSpace(s)
 	if len(s) == 0 {
 		fmt.Printf("setSuffixConfig gets an empty string.\n")
 		return sc, errors.New("empty string")
 	}
 
+	sc = new(SuffixConfig)
 	s = strings.ToLower(s)
 	if s == "all" {
 		sc.isSetAll = true
@@ -118,6 +120,17 @@ func setSuffixConfig(s string) (sc SuffixConfig, err error) {
 	return sc, nil
 }
 
+// setHashFunc sets the hash function.
+func setHashFunc(s string) (key string, hf *HashFunc, err error) {
+	key = strings.ToLower(strings.TrimSpace(s))
+	if hf, ok := availableHashFunc[key]; ok {
+		return key, hf, nil
+	} else {
+		fmt.Printf("checkHashFunc checks %s hash function is unavailable.\n", key)
+		return key, hf, errors.New(key + " hash function is unavailable")
+	}
+}
+
 // checkConcurrency checks if the goroutine concurrency is valid.
 func checkConcurrency(u uint8) (err error) {
 	if u >= 1 && u <= 64 {
@@ -125,16 +138,5 @@ func checkConcurrency(u uint8) (err error) {
 	} else {
 		fmt.Printf("checkConcurrency checks %d concurrency is invalid.\n", u)
 		return errors.New(strconv.Itoa(int(u)) + " concurrency is invalid")
-	}
-}
-
-// checkHashFunc checks if the hash function is available.
-func checkHashFunc(s string) (hashFunc string, err error) {
-	hashFunc = strings.ToLower(strings.TrimSpace(s))
-	if _, ok := availableHashFunc[hashFunc]; ok {
-		return hashFunc, nil
-	} else {
-		fmt.Printf("checkHashFunc checks %s hash function is unavailable.\n", hashFunc)
-		return hashFunc, errors.New(hashFunc + " hash function is unavailable")
 	}
 }

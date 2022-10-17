@@ -27,7 +27,7 @@ func StartRenameTask() {
 // renameOneFile renames a specific file.
 func renameOneFile() error {
 	fmt.Printf("Result of renameOneFile:\n")
-	fileHash, err := GetFileHash(argFile, argHash)
+	fileHash, err := hashFunc.GetFileHash(argFile)
 	if err != nil {
 		fmt.Printf("renameOneFile gets the %s of %s error: %s\n", argHash, argFile, err.Error())
 		return err
@@ -90,7 +90,7 @@ func renameBulkFiles() error {
 				}
 				// Get file hash
 				oldFile := filepath.Join(argDir, fileName)
-				fileHash, err := GetFileHash(oldFile, argHash)
+				fileHash, err := hashFunc.GetFileHash(oldFile)
 				if err != nil {
 					fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
 					renameWG.Done()

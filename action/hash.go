@@ -6,72 +6,56 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"hash"
 	"io"
 	"os"
 )
 
 // availableHashFunc records the available hash function currently.
-var availableHashFunc = map[string]struct{}{
-	"md5":    struct{}{},
-	"sha1":   struct{}{},
-	"sha256": struct{}{},
+var availableHashFunc = map[string]*HashFunc{
+	"md5": {
+		HashName: "md5",
+	},
+	"sha1": {
+		HashName: "sha1",
+	},
+	"sha256": {
+		HashName: "sha256",
+	},
 }
 
-// GetFileHash gets the hash value of file according to the specific hash function.
-func GetFileHash(filePath, hashFunc string) (hash string, err error) {
-	switch hashFunc {
+// HashFunc defines the hash function elements during renaming.
+type HashFunc struct {
+	HashName string
+}
+
+// GenHashObj generates the hash object according to the specific hash function name.
+func (h *HashFunc) GenHashObj() (hash.Hash, error) {
+	switch h.HashName {
 	case "md5":
-		return GetFileMD5(filePath)
+		return md5.New(), nil
 	case "sha1":
-		return GetFileSHA1(filePath)
+		return sha1.New(), nil
 	case "sha256":
-		return GetFileSHA256(filePath)
+		return sha256.New(), nil
 	default:
-		return "", errors.New(hashFunc + " hash function is unavailable")
+		return nil, errors.New(h.HashName + " hash function is unavailable")
 	}
 }
 
-// GetFileMD5 calculates the MD5 hash value of file.
-func GetFileMD5(filePath string) (string, error) {
+// GetFileHash calculates the hash value of file.
+func (h *HashFunc) GetFileHash(filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
 
-	hash := md5.New()
-	if _, err = io.Copy(hash, file); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(hash.Sum(nil)), nil
-}
-
-// GetFileSHA1 calculates the SHA1 hash value of file.
-func GetFileSHA1(filePath string) (string, error) {
-	file, err := os.Open(filePath)
+	hash, err := h.GenHashObj()
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
 
-	hash := sha1.New()
-	if _, err = io.Copy(hash, file); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(hash.Sum(nil)), nil
-}
-
-// GetFileSHA256 calculates the SHA256 hash value of file.
-func GetFileSHA256(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	hash := sha256.New()
 	if _, err = io.Copy(hash, file); err != nil {
 		return "", err
 	}
