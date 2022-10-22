@@ -17,6 +17,7 @@ var (
 	argHelp        bool
 	argVersion     bool
 	argUppercase   bool
+	argForce       bool
 	argFile        string
 	argDir         string
 	argSuffix      string
@@ -43,6 +44,7 @@ func InitArgs() {
 	flag.BoolVarP(&argHelp, "help", "", false, usageMap["help"])
 	flag.BoolVarP(&argVersion, "version", "v", false, usageMap["version"])
 	flag.BoolVarP(&argUppercase, "uppercase", "u", false, usageMap["uppercase"])
+	flag.BoolVarP(&argForce, "force", "F", false, usageMap["force"])
 	flag.StringVarP(&argFile, "file", "f", "", usageMap["file"])
 	flag.StringVarP(&argDir, "dir", "d", "", usageMap["dir"])
 	flag.StringVarP(&argSuffix, "suffix", "s", "", usageMap["suffix"])

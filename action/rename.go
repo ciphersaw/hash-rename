@@ -30,11 +30,13 @@ func StartRenameTask() {
 func renameOneFile() error {
 	fmt.Printf("Result of renameOneFile:\n")
 	// Check if need to rename
-	needRename := checkIfNeedRename(filepath.Base(argFile))
-	if !needRename {
-		fmt.Printf("[*] %s has already been renamed with %s value, no need to rename again.\n",
-			filepath.Base(argFile), argHash)
-		return nil
+	if !argForce {
+		needRename := checkIfNeedRename(filepath.Base(argFile))
+		if !needRename {
+			fmt.Printf("[*] %s has already been renamed with %s value, no need to rename again.\n",
+				filepath.Base(argFile), argHash)
+			return nil
+		}
 	}
 	// Get file hash
 	fileHash, err := hashFunc.GetFileHash(argFile)
@@ -102,10 +104,12 @@ func renameBulkFiles() error {
 					}
 				}
 				// Check if need to rename
-				needRename := checkIfNeedRename(fileName)
-				if !needRename {
-					renameWG.Done()
-					continue
+				if !argForce {
+					needRename := checkIfNeedRename(fileName)
+					if !needRename {
+						renameWG.Done()
+						continue
+					}
 				}
 				// Get file hash
 				oldFile := filepath.Join(argDir, fileName)
