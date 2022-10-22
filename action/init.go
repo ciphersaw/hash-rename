@@ -69,13 +69,11 @@ func InitArgs() {
 			os.Exit(1)
 		}
 
-		suffixConfig, err = setSuffixConfig(argSuffix)
-		if err != nil {
+		if suffixConfig, err = setSuffixConfig(argSuffix); err != nil {
 			os.Exit(1)
 		}
 
-		err = checkConcurrency(argConcurrency)
-		if err != nil {
+		if err = checkConcurrency(argConcurrency); err != nil {
 			os.Exit(1)
 		}
 	}
@@ -85,7 +83,7 @@ func InitArgs() {
 		os.Exit(1)
 	}
 
-	if argHash, hashFunc, err = setHashFunc(argHash); err != nil {
+	if hashFunc, err = setHashFunc(argHash); err != nil {
 		os.Exit(1)
 	}
 }
@@ -94,7 +92,7 @@ func InitArgs() {
 func setSuffixConfig(s string) (sc *SuffixConfig, err error) {
 	s = strings.TrimSpace(s)
 	if len(s) == 0 {
-		fmt.Printf("setSuffixConfig gets an empty string.\n")
+		fmt.Printf("[-] setSuffixConfig gets an empty string.\n")
 		return sc, errors.New("empty string")
 	}
 
@@ -123,13 +121,13 @@ func setSuffixConfig(s string) (sc *SuffixConfig, err error) {
 }
 
 // setHashFunc sets the hash function.
-func setHashFunc(s string) (key string, hf *HashFunc, err error) {
-	key = strings.ToLower(strings.TrimSpace(s))
+func setHashFunc(s string) (hf *HashFunc, err error) {
+	key := strings.ToLower(strings.TrimSpace(s))
 	if hf, ok := availableHashFunc[key]; ok {
-		return key, hf, nil
+		return hf, nil
 	} else {
-		fmt.Printf("checkHashFunc checks %s hash function is unavailable.\n", key)
-		return key, hf, errors.New(key + " hash function is unavailable")
+		fmt.Printf("[-] checkHashFunc checks %s hash function is unavailable.\n", key)
+		return hf, errors.New(key + " hash function is unavailable")
 	}
 }
 
@@ -138,7 +136,7 @@ func checkConcurrency(u uint8) (err error) {
 	if u >= 1 && u <= 64 {
 		return nil
 	} else {
-		fmt.Printf("checkConcurrency checks %d concurrency is invalid.\n", u)
+		fmt.Printf("[-] checkConcurrency checks %d concurrency is invalid.\n", u)
 		return errors.New(strconv.Itoa(int(u)) + " concurrency is invalid")
 	}
 }

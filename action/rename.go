@@ -33,15 +33,15 @@ func renameOneFile() error {
 	if !argForce {
 		needRename := checkIfNeedRename(filepath.Base(argFile))
 		if !needRename {
-			fmt.Printf("[*] %s has already been renamed with %s value, no need to rename again.\n",
-				filepath.Base(argFile), argHash)
+			fmt.Printf("[-] %s has already been renamed with %s value, no need to rename again.\n",
+				filepath.Base(argFile), hashFunc.HashName)
 			return nil
 		}
 	}
 	// Get file hash
 	fileHash, err := hashFunc.GetFileHash(argFile)
 	if err != nil {
-		fmt.Printf("renameOneFile gets the %s of %s error: %s\n", argHash, argFile, err.Error())
+		fmt.Printf("[-] renameOneFile gets the %s of %s error: %s\n", hashFunc.HashName, argFile, err.Error())
 		return err
 	}
 	if argUppercase {
@@ -53,7 +53,7 @@ func renameOneFile() error {
 	newFile := filepath.Join(fileDir, fileHash+fileSuffix)
 	err = os.Rename(argFile, newFile)
 	if err != nil {
-		fmt.Printf("renameOneFile renames %s to %s error: %s\n", argFile, newFile, err.Error())
+		fmt.Printf("[-] renameOneFile renames %s to %s error: %s\n", argFile, newFile, err.Error())
 		return err
 	}
 	// Output result
@@ -66,7 +66,7 @@ func renameBulkFiles() error {
 	fmt.Printf("Result of renameBulkFiles:\n")
 	files, err := os.ReadDir(argDir)
 	if err != nil {
-		fmt.Printf("renameBulkFiles gets the files in %s error: %s\n", argDir, err.Error())
+		fmt.Printf("[-] renameBulkFiles gets the files in %s error: %s\n", argDir, err.Error())
 		return err
 	}
 
@@ -115,7 +115,7 @@ func renameBulkFiles() error {
 				oldFile := filepath.Join(argDir, fileName)
 				fileHash, err := hashFunc.GetFileHash(oldFile)
 				if err != nil {
-					fmt.Printf("renameBulkFiles gets the %s of %s error: %s\n", argHash, oldFile, err.Error())
+					fmt.Printf("[-] renameBulkFiles gets the %s of %s error: %s\n", hashFunc.HashName, oldFile, err.Error())
 					renameWG.Done()
 					continue
 				}
@@ -126,7 +126,7 @@ func renameBulkFiles() error {
 				newFile := filepath.Join(argDir, fileHash+fileSuffix)
 				err = os.Rename(oldFile, newFile)
 				if err != nil {
-					fmt.Printf("renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
+					fmt.Printf("[-] renameBulkFiles renames %s to %s error: %s\n", oldFile, newFile, err.Error())
 					renameWG.Done()
 					continue
 				}
@@ -143,10 +143,14 @@ func renameBulkFiles() error {
 	}
 	renameWG.Wait()
 
-	// Check if files have been renamed
+	// Print the reasons that no files have been renamed
 	if renameCount == 0 {
-		fmt.Printf("[*] Files in %s have already been renamed with %s value, no need to rename again.\n",
-			argDir, argHash)
+		reasons := fmt.Sprintf("[-] No files have been renamed, and the possible reasons are as follows:\n")
+		reasons += fmt.Sprintf(" 1. The suffixes you specify do not match any files.\n")
+		reasons += fmt.Sprintf(" 2. The files in %s have already been renamed with %s value, no need to rename again.\n",
+			argDir, hashFunc.HashName)
+		reasons += fmt.Sprintf(" 3. Errors happen in getting file hash or renaming file with its hash value.\n")
+		fmt.Printf(reasons)
 	}
 
 	close(fileNameChan)
