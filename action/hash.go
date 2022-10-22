@@ -9,24 +9,33 @@ import (
 	"hash"
 	"io"
 	"os"
+	"regexp"
 )
 
 // availableHashFunc records the available hash function currently.
 var availableHashFunc = map[string]*HashFunc{
 	"md5": {
-		HashName: "md5",
+		HashName:  "md5",
+		Lowercase: regexp.MustCompile(`^[0-9a-f]{32}$`),
+		Uppercase: regexp.MustCompile(`^[0-9A-F]{32}$`),
 	},
 	"sha1": {
-		HashName: "sha1",
+		HashName:  "sha1",
+		Lowercase: regexp.MustCompile(`^[0-9a-f]{40}$`),
+		Uppercase: regexp.MustCompile(`^[0-9A-F]{40}$`),
 	},
 	"sha256": {
-		HashName: "sha256",
+		HashName:  "sha256",
+		Lowercase: regexp.MustCompile(`^[0-9a-f]{64}$`),
+		Uppercase: regexp.MustCompile(`^[0-9A-F]{64}$`),
 	},
 }
 
 // HashFunc defines the hash function elements during renaming.
 type HashFunc struct {
-	HashName string
+	HashName  string
+	Lowercase *regexp.Regexp
+	Uppercase *regexp.Regexp
 }
 
 // GenHashObj generates the hash object according to the specific hash function name.

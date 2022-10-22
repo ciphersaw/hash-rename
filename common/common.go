@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // IsPathExist checks if the path is existed.
@@ -36,4 +37,9 @@ func IsDirExist(path string) bool {
 	} else {
 		return true
 	}
+}
+
+// GetFileNameWithoutExt gets the file name without extension.
+func GetFileNameWithoutExt(fileName string) string {
+	return fileName[:len(fileName)-len(filepath.Ext(fileName))]
 }
