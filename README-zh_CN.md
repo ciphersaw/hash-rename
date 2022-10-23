@@ -8,7 +8,7 @@ hash-rename 作为一个常用工具，能将文件用其哈希值重命名，�
 
 ## 使用说明
 
-以下用法在 Linux 系统下演示，在 Windows 等其他系统下用法相同，也可作参考。
+以下用法在 Linux 系统下演示，在 Windows 与 macOS 等其他系统下用法相同，也可作参考。
 
 ### 获取帮助
 
@@ -18,15 +18,18 @@ hash-rename 作为一个常用工具，能将文件用其哈希值重命名，�
 ┌──(root💀kali)-[/tmp/test]
 └─# ./hash-rename --help
 Usages:
-hash-rename <-f /path/to/file> [-h hash_func]
-hash-rename <-d /path/to/dir -s suffix1,suffix2,...> [-h hash_func]
-  -d, --dir string      Set the directory path including files to be renamed.
-  -f, --file string     Set the file path to be renamed.
-  -h, --hash string     Set the hash function for renaming.
-                        Currently available for md5, sha1, sha256. (default "md5")
-      --help            Print the usage of hash-rename.
-  -s, --suffix string   Set the suffixes of files.
-  -v, --version         Print the version of hash-rename.
+hash-rename <-f /path/to/file> [-h hash_func] [-u] [-F]
+hash-rename <-d /path/to/dir -s suffix1,suffix2,...> [-h hash_func] [-c num] [-u] [-F]
+  -c, --concurrency uint8   Set the goroutine concurrency for renaming files. (default 4)
+  -d, --dir string          Set the directory path including files to be renamed.
+  -f, --file string         Set the file path to be renamed.
+  -F, --force               Force to rename ignoring file name check.
+  -h, --hash string         Set the hash function for renaming.
+                            Currently available for md5, sha1, sha256. (default "md5")
+      --help                Print the usage of hash-rename.
+  -s, --suffix string       Set the suffixes of files.
+  -u, --uppercase           Set the uppercase of hash value for renaming.
+  -v, --version             Print the version of hash-rename.
 ```
 
 ### 获取版本号
@@ -36,12 +39,12 @@ hash-rename <-d /path/to/dir -s suffix1,suffix2,...> [-h hash_func]
 ```bash
 ┌──(root💀kali)-[/tmp/test]
 └─# ./hash-rename --version
-v1.0.0
+v1.1.0
 ```
 
 ### 重命名单个文件
 
-使用 `-f, --file` 将一个系统文件重命名为其 md5 哈希值：
+使用 `-f, --file` 将一个系统文件重命名为其 MD5 小写哈希值：
 
 注意到此系统文件没有后缀名。
 
@@ -52,61 +55,109 @@ Result of renameOneFile:
 [*] passwd --> bf52fc29f3fd754693ce4a6ff11575e7
 ```
 
-使用 `-f, --file` 将一个 jpg 图片文件重命名为其 sha1 哈希值：
+使用 `-f, --file` 将一个 jpg 图片文件重命名为其 SHA1 大写哈希值：
 
-注意到可使用 `-h, --hash` 指定一种哈希算法用于重命名。
+注意到 `-h, --hash` 可指定一种哈希算法用于重命名（默认值为 md5），而 `-u, --uppercase` 可指定用大写哈希值重命名。
 
 ```bash
 ┌──(root💀kali)-[/tmp/test]
-└─# ./hash-rename -f ./test01.jpg -h sha1
+└─# ./hash-rename -f ./test01.jpg -h sha1 -u
 Result of renameOneFile:
-[*] test01.jpg --> 440a91d6fabaf5f8865faf97dfe574345b37a5a7.jpg
+[*] test01.jpg --> 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg
+```
+
+为了避免重复工作，若当前文件名与指定对应的哈希值一致，则不会进行重命名。
+
+尝试将 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg 文件再次重命名为其 SHA1 大写哈希值，会提示文件无需再次重命名：
+
+```bash
+┌──(root💀kali)-[/tmp/test]
+└─# ./hash-rename -f 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg -h sha1 -u
+Result of renameOneFile:
+[-] 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg has already been renamed with sha1 value, no need to rename again.
+```
+
+尽管如此，可使用 `-F, --force` 来忽略文件名检查，并进行强制重命名：
+
+```bash
+──(root💀kali)-[/tmp/test]
+└─# ./hash-rename -f 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg -h sha1 -u -F
+Result of renameOneFile:
+[*] 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg --> 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg
 ```
 
 ### 重命名目录下多个文件
 
-使用 `-d, --dir` 将目录下的所有 jpg 与 png 图片文件，重命名为各自 sha256 哈希值：
+使用 `-d, --dir` 将目录下的所有 jpg 与 png 图片文件，重命名为各自的 SHA1 小写哈希值，并将 Go 协程并发数设置为 10：
 
-注意到必须使用 `-s, --suffix`  指定需要重命名的文件的后缀名。
+注意到必须使用 `-s, --suffix`  指定需要重命名的文件的后缀名，而可使用 `-c, --concurrency` 设置文件重命名并发数（默认值为 4）。
 
 ```bash
 ┌──(root💀kali)-[/tmp/test]
-└─# ./hash-rename -d ./ -s jpg,png -h sha256
+└─# ./hash-rename -d ./ -s jpg,png -h sha1 -c 10
 Result of renameBulkFiles:
-[1] 440a91d6fabaf5f8865faf97dfe574345b37a5a7.jpg --> 71bfe668469aa882c3422100b1cbd89c4b83dbce9ea279854966e8ef084ffe0e.jpg
-[2] test02.jpg --> 0014e9a4bb731b6060e9476dd6ad25f8423fd27451fa9d5c1ef1a9cec1bd45e8.jpg
-[3] test03.png --> 428e6d35fe78cab5c792657088a124d91076e97b9cad5036b46698ea7341985e.png
-[4] test04.png --> d8429ab7f39582146710a8afbc7d5bbe8adc0f9c7ee16b6e50c8738d0caafcf9.png
+[1] 440A91D6FABAF5F8865FAF97DFE574345B37A5A7.jpg --> 440a91d6fabaf5f8865faf97dfe574345b37a5a7.jpg
+[2] test02.jpg --> 6705507d67c4d56eb3d273e03e0952f5daa2aea9.jpg
+[3] test03.png --> e2ef055966ef72dfeb6bb3a8d6dd0b6746166055.png
+[4] test04.png --> 5aa00caa44b1dfc9f0d341825b04bb2a006d8976.png
 ```
 
 其中一种特殊的后缀名 `null/none`，用于重命名没有后缀名的文件：
 
-注意到此处  hash-rename 工具本身也没有后缀名，所以它也被重命名为其 sha1 哈希值。
+注意到此处  hash-rename 工具本身也没有后缀名，所以它也被重命名为其 SHA256 大写哈希值。
 
 ```bash
 ┌──(root💀kali)-[/tmp/test]
-└─# ./hash-rename -d ./ -s null -h sha1     
+└─# ./hash-rename -d ./ -s null -h sha256 -u
 Result of renameBulkFiles:
-[1] bf52fc29f3fd754693ce4a6ff11575e7 --> 9ee17a7aa5a9cfb91dfc27a13a3f29732dd1f051
-[2] hash-rename --> c2eccfd7430d8e8b37272b7cfb5f75ccbff41056
-[3] zsh --> 5a2e990f3ae4ca940f9078826708ec9bdd273baf
+[1] bf52fc29f3fd754693ce4a6ff11575e7 --> E56B457E3F3B8104DDEAB52028E934863C2A28E49EEAA557EA68F274E2893BC2
+[2] zsh --> C3F5891EC3CAB3D0534BFCB3CFB44B224236C8100459704CB8AE0388229DFBE5
+[3] hash-rename --> 15144B2E8ED998AB4E1813925AFD56CF114D2828FC34D7519BC6DFF23256AE15
 ```
 
 另一种特殊的后缀名 `all`，用于重命名目录下的所有文件，无论是否有后缀名：
 
-注意到 /tmp/test 目录下的所有文件，都被重命名为各自的 md5 哈希值。
+注意到 /tmp/test 目录下的所有文件，都被重命名为各自的 MD5 小写哈希值。
 
 ```bash
 ┌──(root💀kali)-[/tmp/test]
-└─# mv ./c2eccfd7430d8e8b37272b7cfb5f75ccbff41056 /tmp/hash-rename
+└─# mv ./15144B2E8ED998AB4E1813925AFD56CF114D2828FC34D7519BC6DFF23256AE15 /tmp/hash-rename
 
 ┌──(root💀kali)-[/tmp/test]
 └─# /tmp/hash-rename -d /tmp/test -s all -h md5
 Result of renameBulkFiles:
-[1] 0014e9a4bb731b6060e9476dd6ad25f8423fd27451fa9d5c1ef1a9cec1bd45e8.jpg --> 200852747245ddc1a9282a8006c72068.jpg
-[2] 428e6d35fe78cab5c792657088a124d91076e97b9cad5036b46698ea7341985e.png --> 50197874009730f5a5d366baf52ed102.png
-[3] 5a2e990f3ae4ca940f9078826708ec9bdd273baf --> f7889fc1a97bb6786b79ceb63d9c6ca4
-[4] 71bfe668469aa882c3422100b1cbd89c4b83dbce9ea279854966e8ef084ffe0e.jpg --> bcc60e314d22ac5048299327c54d5e83.jpg
-[5] 9ee17a7aa5a9cfb91dfc27a13a3f29732dd1f051 --> bf52fc29f3fd754693ce4a6ff11575e7
-[6] d8429ab7f39582146710a8afbc7d5bbe8adc0f9c7ee16b6e50c8738d0caafcf9.png --> 80dabfe444567e35ee03d8c053b54d71.png
+[1] 440a91d6fabaf5f8865faf97dfe574345b37a5a7.jpg --> bcc60e314d22ac5048299327c54d5e83.jpg
+[2] 5aa00caa44b1dfc9f0d341825b04bb2a006d8976.png --> 80dabfe444567e35ee03d8c053b54d71.png
+[3] 6705507d67c4d56eb3d273e03e0952f5daa2aea9.jpg --> 200852747245ddc1a9282a8006c72068.jpg
+[4] e2ef055966ef72dfeb6bb3a8d6dd0b6746166055.png --> 50197874009730f5a5d366baf52ed102.png
+[5] E56B457E3F3B8104DDEAB52028E934863C2A28E49EEAA557EA68F274E2893BC2 --> bf52fc29f3fd754693ce4a6ff11575e7
+[6] C3F5891EC3CAB3D0534BFCB3CFB44B224236C8100459704CB8AE0388229DFBE5 --> f7889fc1a97bb6786b79ceb63d9c6ca4
+```
+
+尝试将 /tmp/test 目录下的所有文件再次重命名为其 MD5 小写哈希值，会提示未进行重命名可能有哪些原因，其中包括文件无需再次重命名：
+
+注意到其他可能的原因，还包括文件后缀未匹配，以及计算哈希值或文件重命名过程中发生的错误等。
+
+```bash
+┌──(root💀kali)-[/tmp/test]
+└─# /tmp/hash-rename -d /tmp/test -s all -h md5
+Result of renameBulkFiles:
+[-] No files have been renamed, and the possible reasons are as follows:
+ 1. The suffixes you specify do not match any files.
+ 2. The files in /tmp/test have already been renamed with md5 value, no need to rename again.
+ 3. Errors happen in getting file hash or renaming file with its hash value.
+```
+
+同上，使用 `-F, --force` 依旧能够对 /tmp/test 目录下的所有文件，进行强制重命名:
+
+```bash
+┌──(root💀kali)-[/tmp/test]
+└─# /tmp/hash-rename -d /tmp/test -s all -h md5 -F
+Result of renameBulkFiles:
+[1] 200852747245ddc1a9282a8006c72068.jpg --> 200852747245ddc1a9282a8006c72068.jpg
+[2] 50197874009730f5a5d366baf52ed102.png --> 50197874009730f5a5d366baf52ed102.png
+[3] bcc60e314d22ac5048299327c54d5e83.jpg --> bcc60e314d22ac5048299327c54d5e83.jpg
+[4] 80dabfe444567e35ee03d8c053b54d71.png --> 80dabfe444567e35ee03d8c053b54d71.png
+[5] bf52fc29f3fd754693ce4a6ff11575e7 --> bf52fc29f3fd754693ce4a6ff11575e7
+[6] f7889fc1a97bb6786b79ceb63d9c6ca4 --> f7889fc1a97bb6786b79ceb63d9c6ca4
 ```
